@@ -5,6 +5,7 @@ http://10.10.8.162:801/eportal/portal/login?callback=dr1005&user_account=%2C1%2C
 
 import requests
 import sys
+from datetime import datetime
 
 # 检查命令行参数数量
 if len(sys.argv) != 4:
@@ -29,4 +30,5 @@ url = "http://10.10.8.162:801/eportal/portal/login?callback="+DR+"&user_account=
 
 # 发送请求
 response = requests.get(url)
-print(response.text)
+
+print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + response.text)
