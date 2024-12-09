@@ -1,6 +1,6 @@
 '''第一条为电脑，第二条为手机
-http://10.10.8.162:801/eportal/portal/login?callback=dr1004&user_account=%2C0%2C账号&user_password=密码 
-http://10.10.8.162:801/eportal/portal/login?callback=dr1005&user_account=%2C1%2C账号&user_password=密码 
+http://10.10.8.162:801/eportal/portal/login?callback=dr1004&user_account=%2C0%2C账号&user_password=密码
+http://10.10.8.162:801/eportal/portal/login?callback=dr1005&user_account=%2C1%2C账号&user_password=密码
 '''
 
 import requests
@@ -8,7 +8,7 @@ import sys
 
 # 检查命令行参数数量
 if len(sys.argv) != 4:
-    print("Usage: python3 cqu.py 账号 密码 客户端")
+    print("使用方法: python3 cqu.py 账号 密码 客户端")
     sys.exit(1)
 
 # 获取命令行参数
