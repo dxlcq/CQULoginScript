@@ -106,7 +106,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-windows/dist/cqu.exe
+          asset_path: cqu-windows/cqu.exe
           asset_name: cqu-windows.exe
           asset_content_type: application/octet-stream
 
@@ -116,7 +116,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-ubuntu/dist/cqu
+          asset_path: cqu-ubuntu/cqu
           asset_name: cqu-ubuntu
           asset_content_type: application/octet-stream
 
@@ -126,6 +126,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-macos/dist/cqu
+          asset_path: cqu-macos/cqu
           asset_name: cqu-macos
           asset_content_type: application/octet-stream
