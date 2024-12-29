@@ -1,5 +1,5 @@
 # 这个工作流将在代码提交到 main 分支或向 main 分支发起拉取请求时触发
-# 它将为 macOS、Linux 和 Windows 构建 Python 可执行文件
+# 它将为 macOS、Linux 和 Windows 构建 Python 可执行文件，不运行测试
 
 name: Build Python Executables
 
@@ -21,36 +21,41 @@ jobs:
         python-version: [3.10]
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests pyinstaller
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-    - name: Build Executable with PyInstaller
-      run: |
-        pyinstaller --onefile cqu.py
-      shell: ${{ matrix.os == 'windows-latest' && 'cmd' || 'bash' }}
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Upload Executable Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: cqu-${{ matrix.os }}
-        path: |
-          # Linux and macOS executables
-          dist/cqu
-          # Windows executable
-          dist/cqu.exe
+      - name: Build Executable with PyInstaller
+        run: |
+          pyinstaller --onefile cqu.py
+        shell: ${{ matrix.os == 'windows-latest' && 'cmd' || 'bash' }}
+
+      - name: Upload Executable Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cqu-${{ matrix.os }}
+          path: |
+            ${{ matrix.os == 'windows-latest' && 'dist/cqu.exe' || 'dist/cqu' }}
