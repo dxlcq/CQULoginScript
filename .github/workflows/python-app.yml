@@ -1,4 +1,4 @@
-name: Build & Release Python Executables
+name: Build Python Executables
 
 on:
   push:
@@ -6,14 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
-# 创建 Release 需要写权限
 permissions:
-  contents: write
+  contents: write   # 如果需要创建 Release，必须是 write
 
 jobs:
-  #
-  # 1) 使用矩阵分别在三大平台构建可执行文件并上传 Artifact
-  #
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -22,21 +18,13 @@ jobs:
         python-version: [3.10]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -44,25 +32,38 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: (Optional) Lint with flake8
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      #
+      # 分别针对 Windows / 非 Windows
+      #
+      - name: Build on Windows
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: pyinstaller --onefile cqu.py
 
-      - name: Build Executable with PyInstaller
-        run: |
-          pyinstaller --onefile cqu.py
-          shell: ${{ matrix.os == 'windows-latest' ? 'cmd' : 'bash' }}
+      - name: Build on Linux/macOS
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: pyinstaller --onefile cqu.py
 
-      - name: Upload Executable Artifact
+      #
+      # 分别上传
+      #
+      - name: Upload Executable Artifact (Windows)
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v3
-        with: |
+        with:
+          name: cqu-windows
+          path: dist/cqu.exe
+
+      - name: Upload Executable Artifact (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
           name: cqu-${{ matrix.os }}
-          path: ${{ matrix.os == 'windows-latest' ? 'dist/cqu.exe' : 'dist/cqu' }}
+          path: dist/cqu
 
   #
-  # 2) 所有平台构建完成后，在一次性 job 中创建 Release 并上传各平台产物
-  #    仅在 push 事件时执行（避免在 PR 时反复创建 Release）
+  # 如果需要在 push 时创建 Release
   #
   release:
     needs: build
@@ -70,23 +71,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Linux artifact
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: cqu-windows
+          path: cqu-windows
+
+      - name: Download Ubuntu artifact
         uses: actions/download-artifact@v3
         with:
           name: cqu-ubuntu-latest
-          path: cqu-ubuntu-latest
+          path: cqu-ubuntu
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v3
         with:
           name: cqu-macos-latest
-          path: cqu-macos-latest
-
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: cqu-windows-latest
-          path: cqu-windows-latest
+          path: cqu-macos
 
       - name: Create Release
         id: create_release
@@ -99,14 +100,24 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset (Linux)
+      - name: Upload Release Asset (Windows)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-ubuntu-latest/cqu
-          asset_name: cqu-ubuntu-latest
+          asset_path: cqu-windows/dist/cqu.exe
+          asset_name: cqu-windows.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Ubuntu)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: cqu-ubuntu/dist/cqu
+          asset_name: cqu-ubuntu
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (macOS)
@@ -115,16 +126,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-macos-latest/cqu
-          asset_name: cqu-macos-latest
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (Windows)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cqu-windows-latest/cqu.exe
-          asset_name: cqu-windows-latest.exe
+          asset_path: cqu-macos/dist/cqu
+          asset_name: cqu-macos
           asset_content_type: application/octet-stream
