@@ -52,11 +52,11 @@ jobs:
       - name: Build Executable with PyInstaller
         run: |
           pyinstaller --onefile cqu.py
-        shell: ${{ matrix.os == 'windows-latest' ? 'cmd' : 'bash' }}
+          shell: ${{ matrix.os == 'windows-latest' ? 'cmd' : 'bash' }}
 
       - name: Upload Executable Artifact
         uses: actions/upload-artifact@v3
-        with:
+        with: |
           name: cqu-${{ matrix.os }}
           path: ${{ matrix.os == 'windows-latest' ? 'dist/cqu.exe' : 'dist/cqu' }}
 
