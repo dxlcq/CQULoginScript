@@ -50,14 +50,14 @@ jobs:
       #
       - name: Upload Executable Artifact (Windows)
         if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cqu-windows
           path: dist/cqu.exe
 
       - name: Upload Executable Artifact (Linux/macOS)
         if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cqu-${{ matrix.os }}
           path: dist/cqu
